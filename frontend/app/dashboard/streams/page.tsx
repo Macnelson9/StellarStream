@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import StreamingBalanceCard from "@/components/streamingbalance/streamingbalance";
 import { ArrowUpRight, ArrowDownLeft, ChevronDown } from "lucide-react";
 import { useScrollBlur } from "@/lib/use-scroll-blur";
+import MigrationWizard from "@/components/migration-wizard";
 
 type Stream = {
   id: string;
@@ -71,7 +72,7 @@ const mockIncomingStreams: Stream[] = [
 function StreamCard({ stream, type }: { stream: Stream; type: "outgoing" | "incoming" }) {
   const Icon = type === "outgoing" ? ArrowUpRight : ArrowDownLeft;
   const iconColor = type === "outgoing" ? "text-red-400" : "text-green-400";
-  
+
   const progress = useMemo(() => {
     const now = Date.now();
     const start = stream.startDate.getTime();
@@ -81,11 +82,10 @@ function StreamCard({ stream, type }: { stream: Stream; type: "outgoing" | "inco
 
   return (
     <div
-      className={`relative rounded-xl border backdrop-blur-xl p-4 transition-all duration-300 hover:bg-white/[0.06] ${
-        stream.status === "active"
+      className={`relative rounded-xl border backdrop-blur-xl p-4 transition-all duration-300 hover:bg-white/[0.06] ${stream.status === "active"
           ? "border-[#00f5ff]/40 bg-white/[0.04] animate-pulse-border"
           : "border-white/10 bg-white/[0.02]"
-      }`}
+        }`}
     >
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-2">
@@ -95,13 +95,12 @@ function StreamCard({ stream, type }: { stream: Stream; type: "outgoing" | "inco
           <span className="font-mono text-sm text-white/90">{stream.recipient}</span>
         </div>
         <span
-          className={`text-xs px-2 py-0.5 rounded-full ${
-            stream.status === "active"
+          className={`text-xs px-2 py-0.5 rounded-full ${stream.status === "active"
               ? "bg-[#00f5ff]/20 text-[#00f5ff]"
               : stream.status === "paused"
-              ? "bg-yellow-500/20 text-yellow-400"
-              : "bg-white/10 text-white/60"
-          }`}
+                ? "bg-yellow-500/20 text-yellow-400"
+                : "bg-white/10 text-white/60"
+            }`}
         >
           {stream.status}
         </span>
@@ -112,7 +111,7 @@ function StreamCard({ stream, type }: { stream: Stream; type: "outgoing" | "inco
           <span className="text-xs text-white/50">Total Amount</span>
           <span className="text-lg font-semibold text-white">${stream.amount.toLocaleString()}</span>
         </div>
-        
+
         <div className="flex justify-between items-baseline">
           <span className="text-xs text-white/50">Rate</span>
           <span className="text-sm text-white/70">${stream.rate.toFixed(8)}/ms</span>
@@ -140,9 +139,10 @@ function StreamCard({ stream, type }: { stream: Stream; type: "outgoing" | "inco
 }
 
 export default function StreamsPage() {
+  const [migrationOpen, setMigrationOpen] = useState(false);
   const [outgoingSort, setOutgoingSort] = useState<SortOption>("endDate");
   const [incomingSort, setIncomingSort] = useState<SortOption>("endDate");
-  
+
   // Scroll blur hooks for adaptive lucency
   const [outgoingScrollState, outgoingScrollRef] = useScrollBlur({ threshold: 10, maxScroll: 200 });
   const [incomingScrollState, incomingScrollRef] = useScrollBlur({ threshold: 10, maxScroll: 200 });
@@ -188,6 +188,24 @@ export default function StreamsPage() {
 
   return (
     <>
+      {/* Migration Center Banner */}
+      <div className="col-span-full flex items-center justify-between rounded-2xl border border-[#ffb400]/20 bg-[#ffb400]/5 px-5 py-3.5">
+        <div className="flex items-center gap-3">
+          <span className="rounded-md border border-[#ffb400]/30 bg-[#ffb400]/10 px-2 py-0.5 font-mono text-[10px] font-bold tracking-wider text-[#ffb400]">
+            V1
+          </span>
+          <p className="font-body text-sm text-white/70">
+            You have legacy V1 streams — upgrade to Nebula V2 to unlock yield, Receipt NFTs, and more.
+          </p>
+        </div>
+        <button
+          onClick={() => setMigrationOpen(true)}
+          className="ml-4 shrink-0 rounded-xl border border-[#00f5ff]/30 bg-[#00f5ff]/8 px-4 py-2 font-body text-xs font-bold text-[#00f5ff] transition-all hover:border-[#00f5ff]/50 hover:bg-[#00f5ff]/12 hover:shadow-[0_0_16px_rgba(0,245,255,0.12)]"
+        >
+          Open Migration Center →
+        </button>
+      </div>
+
       {/* Column 1: Total Streaming Odometer */}
       <section className="col-span-full lg:col-span-4 rounded-3xl border border-white/10 bg-white/[0.04] backdrop-blur-xl p-6 md:p-8 flex flex-col items-center justify-center min-h-[320px]">
         <p className="font-body text-xs tracking-[0.12em] text-white/60 uppercase mb-2">
@@ -210,7 +228,7 @@ export default function StreamsPage() {
       {/* Column 2: Outgoing Streams */}
       <section className="col-span-full lg:col-span-4 rounded-3xl border border-white/10 bg-white/[0.04] backdrop-blur-xl overflow-hidden">
         {/* Dynamic Blur Header with Adaptive Lucency */}
-        <div 
+        <div
           className="sticky top-0 z-10 px-6 md:px-8 pt-6 md:pt-8 pb-6 transition-all duration-300"
           style={{
             backdropFilter: `blur(${outgoingScrollState.blurIntensity === "md" ? "12px" : outgoingScrollState.blurIntensity === "lg" ? "16px" : outgoingScrollState.blurIntensity === "xl" ? "20px" : "24px"})`,
@@ -238,9 +256,9 @@ export default function StreamsPage() {
             </div>
           </div>
         </div>
-        
+
         {/* Scrollable Stream List */}
-        <div 
+        <div
           ref={outgoingScrollRef}
           className="space-y-3 max-h-[600px] overflow-y-auto px-6 md:px-8 pb-6 md:pb-8 stream-list-scroll"
         >
@@ -253,7 +271,7 @@ export default function StreamsPage() {
       {/* Column 3: Incoming Streams */}
       <section className="col-span-full lg:col-span-4 rounded-3xl border border-white/10 bg-white/[0.04] backdrop-blur-xl overflow-hidden">
         {/* Dynamic Blur Header with Adaptive Lucency */}
-        <div 
+        <div
           className="sticky top-0 z-10 px-6 md:px-8 pt-6 md:pt-8 pb-6 transition-all duration-300"
           style={{
             backdropFilter: `blur(${incomingScrollState.blurIntensity === "md" ? "12px" : incomingScrollState.blurIntensity === "lg" ? "16px" : incomingScrollState.blurIntensity === "xl" ? "20px" : "24px"})`,
@@ -281,9 +299,9 @@ export default function StreamsPage() {
             </div>
           </div>
         </div>
-        
+
         {/* Scrollable Stream List */}
-        <div 
+        <div
           ref={incomingScrollRef}
           className="space-y-3 max-h-[600px] overflow-y-auto px-6 md:px-8 pb-6 md:pb-8 stream-list-scroll"
         >
@@ -292,6 +310,14 @@ export default function StreamsPage() {
           ))}
         </div>
       </section>
+
+      {/* Migration Wizard Modal */}
+      {migrationOpen && (
+        <MigrationWizard
+          walletAddress="GBCZ7HJVDXQKLYH2GYBF6XNMNBQKRDJ5PHKPVQKJ5JDDKL6K4NQDGA"
+          onClose={() => setMigrationOpen(false)}
+        />
+      )}
     </>
   );
 }
